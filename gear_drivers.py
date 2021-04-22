@@ -1,6 +1,6 @@
 import bpy
 from math import *
-import pose_driver_utils
+from . import pose_driver_utils
 
 
 # Creates a system of interlocked gears using drivers to update rotations.
