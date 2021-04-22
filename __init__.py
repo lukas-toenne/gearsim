@@ -32,8 +32,6 @@ bl_info = {
     "category": "Object",
 }
 
-print("HELLO WORLD")
-
 #if "bpy" in locals():
 #    import importlib
 #    importlib.reload(fracture_cell_setup)
@@ -50,35 +48,37 @@ from bpy.props import (
 
 from bpy.types import Operator
 
-class GearSimSetup(Operator):
-    bl_idname = "object.setup_gearsim"
-    bl_label = "Set up gear simulation"
-    bl_options = {'PRESET', 'UNDO'}
+# class GearSimSetup(Operator):
+#     bl_idname = "object.setup_gearsim"
+#     bl_label = "Set up gear simulation"
+#     bl_options = {'PRESET', 'UNDO'}
 
-    def execute(self, context):
-        return {'FINISHED'}
+#     def execute(self, context):
+#         return {'FINISHED'}
 
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600)
+#     def invoke(self, context, event):
+#         wm = context.window_manager
+#         return wm.invoke_props_dialog(self, width=600)
 
-    def draw(self, context):
-        super().draw(context)
+#     def draw(self, context):
+#         super().draw(context)
 
-def menu_func(self, context):
-    layout = self.layout
-    layout.separator()
-    layout.operator("object.setup_gearsim", text="Setup Gearsim")
+# def menu_func(self, context):
+#     layout = self.layout
+#     layout.separator()
+#     layout.operator("object.setup_gearsim", text="Setup Gearsim")
 
 
 def register():
-    bpy.utils.register_class(GearSimSetup)
-    bpy.types.VIEW3D_MT_object_quick_effects.append(menu_func)
+    # bpy.utils.register_class(GearSimSetup)
+    # bpy.types.VIEW3D_MT_object_quick_effects.append(menu_func)
+    pass
 
 
 def unregister():
-    bpy.utils.unregister_class(GearSimSetup)
-    bpy.types.VIEW3D_MT_object_quick_effects.remove(menu_func)
+    # bpy.utils.unregister_class(GearSimSetup)
+    # bpy.types.VIEW3D_MT_object_quick_effects.remove(menu_func)
+    pass
 
 
 if __name__ == "__main__":
