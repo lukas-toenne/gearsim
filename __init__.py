@@ -32,9 +32,10 @@ bl_info = {
     "category": "Object",
 }
 
-#if "bpy" in locals():
-#    import importlib
-#    importlib.reload(fracture_cell_setup)
+if "bpy" in locals():
+    import importlib
+    importlib.reload(pose_driver_utils)
+    importlib.reload(gear_drivers)
 
 import bpy
 from bpy.props import (
