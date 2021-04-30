@@ -83,9 +83,8 @@ class PropertyNamespace:
         return fcurve.driver
 
     @staticmethod
-    def add_rotation_variable(driver, varname, target, target_axis):
+    def add_rotation_variable(driver, target, target_axis):
         var = driver.variables.new()
-        var.name = varname
         var.type = 'TRANSFORMS'
 
         tar = var.targets[0]
@@ -94,6 +93,13 @@ class PropertyNamespace:
         tar.transform_type = driver_axis_types[target_axis]
         tar.transform_space = 'TRANSFORM_SPACE'
         tar.rotation_mode = 'AUTO'
+
+        return var
+
+    @staticmethod
+    def add_rotation_driver(target, axis):
+        target.rotation_mode = 'XYZ'
+        return add_prop_driver(target, "rotation_euler", axis)
 
 
     @staticmethod
@@ -136,9 +142,8 @@ class PropertyNamespace:
         fcurve.driver.type = 'SCRIPTED'
         return fcurve.driver
 
-    def add_idprop_variable(self, driver, varname, target, target_prop):
+    def add_idprop_variable(self, driver, target, target_prop):
         var = driver.variables.new()
-        var.name = varname
         var.type = 'SINGLE_PROP'
 
         tar = var.targets[0]
@@ -149,3 +154,5 @@ class PropertyNamespace:
             tar.data_path = 'pose.bones["{}"]["{}"]'.format(target.name, propname)
         else:
             tar.data_path = '["{}"]'.format(propname)
+
+        return var
