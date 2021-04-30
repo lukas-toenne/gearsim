@@ -78,6 +78,7 @@ class TransmissionNode(ExpressionNode):
     input_teeth : int
     output_teeth : int
     output_value : NodeValue
+    condition : NodeValue
 
     def __init__(self, input_gear, input_teeth, output_teeth):
         super().__init__()
@@ -87,12 +88,13 @@ class TransmissionNode(ExpressionNode):
 
     def build_drivers(self, context : NodeContext):
         input_rotation = RotationValue.from_gear(self.input_gear)
+        condition = IDPropValue.from_context(context, "condition", value=1.0)
         rotation = IDPropValue.from_context(context, "rotation", value=0.0)
         phase = IDPropValue.from_context(context, "phase", value=0.0)
         ratio = self.input_teeth / self.output_teeth
         rotation.make_driver(
-            "input * {ratio} + phase".format(ratio=ratio),
-            [NodeVariable("input", input_rotation), NodeVariable("phase", phase)],
+            "input * {ratio} + phase if condition else {same}".format(ratio=ratio, same=rotation.self_prop()),
+            [NodeVariable("input", input_rotation), NodeVariable("phase", phase), NodeVariable("condition", condition)],
             use_self = True
         )
         self.output_value = rotation
