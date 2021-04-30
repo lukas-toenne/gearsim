@@ -87,7 +87,7 @@ class TransmissionNode(ExpressionNode):
     def build_drivers(self, context : NodeContext):
         rotation = IDPropValue.from_context(context, "rotation", value=0.0)
         phase = IDPropValue.from_context(context, "phase", value=0.0)
-        ratio = self.input_teeth / self.output_teeth
+        ratio = self.output_teeth / self.input_teeth
         rotation.make_driver(
             "input * {ratio} + phase".format(ratio=ratio),
             [NodeVariable("input", self.input_value), NodeVariable("phase", phase)],
