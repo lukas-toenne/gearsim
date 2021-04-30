@@ -61,13 +61,36 @@ class ConstRotationNode(ExpressionNode):
         self.default_speed = default_speed
 
     def build_drivers(self, context : NodeContext):
-        # User setting to control speed
         rotation = IDPropValue.from_context(context, "rotation", value=0.0)
+        # Variable speed setting
         speed = IDPropValue.from_context(context, "speed", value=self.default_speed)
         frame_delta = FrameDeltaValue.from_context(context)
         rotation.make_driver(
-            "{curval}+speed*delta".format(curval=rotation.self_prop()),
+            "{curval} + speed * delta".format(curval=rotation.self_prop()),
             [NodeVariable("speed", speed), NodeVariable("delta", frame_delta)],
+            use_self = True
+        )
+        self.output_value = rotation
+
+
+class TransmissionNode(ExpressionNode):
+    input_teeth : int
+    output_teeth : int
+    input_value : NodeValue
+    output_value : NodeValue
+
+    def __init__(self, input_teeth, output_teeth):
+        super().__init__()
+        self.input_teeth = input_teeth
+        self.output_teeth = output_teeth
+
+    def build_drivers(self, context : NodeContext):
+        rotation = IDPropValue.from_context(context, "rotation", value=0.0)
+        phase = IDPropValue.from_context(context, "phase", value=0.0)
+        ratio = self.input_teeth / self.output_teeth
+        rotation.make_driver(
+            "input * {ratio} + phase".format(ratio=ratio),
+            [NodeVariable("input", self.input_value), NodeVariable("phase", phase)],
             use_self = True
         )
         self.output_value = rotation
@@ -135,15 +158,18 @@ def build_drivers(obj : bpy.types.Object, nodes : Sequence[GearNode], frame_curr
         visit(rootnode)
         return sorted
 
-    for i, node in enumerate(nodes):
+    for node in nodes:
         if isinstance(node, GearNode):
             input_nodes = gather_expression_nodes(node)
 
             context = NodeContext(node.target_gear)
-            # TODO unique but semantically meaningful node names
-            context.scope = "Node{index}_".format(index=i)
 
-            for inode in input_nodes:
+            for index, inode in enumerate(input_nodes):
+                # TODO unique but semantically meaningful node names
+                context.scope = "Node{index}_".format(index=index)
+
+                # Resolve links
                 for inname, srcnode, srcname in inode.links:
                     setattr(inode, inname, getattr(srcnode, srcname))
+
                 inode.build_drivers(context)
