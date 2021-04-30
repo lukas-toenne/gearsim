@@ -63,7 +63,7 @@ class ConstRotationNode(ExpressionNode):
     def build_drivers(self, context : NodeContext):
         rotation = IDPropValue.from_context(context, "rotation", value=0.0)
         # Variable speed setting
-        speed = IDPropValue.from_context(context, "speed", value=self.default_speed)
+        speed = UserParameter.from_context(context, "speed", value=self.default_speed)
         frame_delta = FrameDeltaValue.from_context(context)
         rotation.make_driver(
             "{curval} + speed * delta".format(curval=rotation.self_prop()),
@@ -87,7 +87,7 @@ class TransmissionNode(ExpressionNode):
     def build_drivers(self, context : NodeContext):
         rotation = IDPropValue.from_context(context, "rotation", value=0.0)
         phase = IDPropValue.from_context(context, "phase", value=0.0)
-        ratio = self.output_teeth / self.input_teeth
+        ratio = self.input_teeth / self.output_teeth
         rotation.make_driver(
             "input * {ratio} + phase".format(ratio=ratio),
             [NodeVariable("input", self.input_value), NodeVariable("phase", phase)],

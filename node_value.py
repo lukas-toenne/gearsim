@@ -24,9 +24,9 @@ class NodeContext:
 
     def __init__(self, target_gear : GearDescriptor):
         self.target_gear = target_gear
-        self.current_value = RotationValue.from_gear(target_gear)
+        self.current_value = RotationValue(target_gear.pose_bone, target_gear.axis)
 
-        self.frame_delta_value = FrameDeltaValue.from_gear(target_gear)
+        self.frame_delta_value = FrameDeltaValue(target_gear.id_data)
 
 
 # Describes a value that can be driven or used as a variable in other drivers
@@ -41,10 +41,6 @@ class RotationValue(NodeValue):
     def __init__(self, target, axis):
         self.target = target
         self.axis = axis
-
-    @classmethod
-    def from_gear(cls, gear : GearDescriptor):
-        return cls(gear.pose_bone, gear.axis)
 
     @classmethod
     def from_context(cls, context : NodeContext):
@@ -77,10 +73,6 @@ class IDPropValue(NodeValue):
             self.create(value, min, max)
 
     @classmethod
-    def from_gear(cls, gear : GearDescriptor, prop, value=None, min=None, max=None):
-        return cls(gear.pose_bone, prop, value, min, max)
-
-    @classmethod
     def from_context(cls, context : NodeContext, prop, value=None, min=None, max=None):
         return cls(context.target_gear.pose_bone, context.scope + prop, value, min, max)
 
@@ -106,10 +98,6 @@ class FrameDeltaValue(IDPropValue):
         super().__init__(target, "frame_delta", value)
 
     @classmethod
-    def from_gear(cls, gear : GearDescriptor, value=None):
-        return cls(gear.pose_bone.id_data, value)
-
-    @classmethod
     def from_context(cls, context : NodeContext, value=None):
         return cls(context.target_gear.id_data, value)
 
@@ -118,9 +106,13 @@ class FramePrevValue(IDPropValue):
         super().__init__(target, "frame_prev", value)
 
     @classmethod
-    def from_gear(cls, gear : GearDescriptor, value=None):
-        return cls(gear.pose_bone.id_data, value)
-
-    @classmethod
     def from_context(cls, context : NodeContext, value=None):
         return cls(context.target_gear.id_data, value)
+
+class UserParameter(IDPropValue):
+    def __init__(self, target, name, value=None, min=None, max=None):
+        super().__init__(target, name, value, min, max)
+
+    @classmethod
+    def from_context(cls, context : NodeContext, name, value=None, min=None, max=None):
+        return cls(context.target_gear.id_data, context.scope + name, value, min, max)
