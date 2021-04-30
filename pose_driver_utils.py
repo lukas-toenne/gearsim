@@ -72,8 +72,8 @@ class PropertyNamespace:
         else:
             return self.prefix + name
 
-    @staticmethod
-    def add_prop_driver(target, prop, index=0):
+    @classmethod
+    def add_prop_driver(cls, target, prop, index=0):
         obj = target.id_data
         if not obj.animation_data:
             obj.animation_data_create()
@@ -82,8 +82,8 @@ class PropertyNamespace:
         fcurve.driver.type = 'SCRIPTED'
         return fcurve.driver
 
-    @staticmethod
-    def add_rotation_variable(driver, target, target_axis):
+    @classmethod
+    def add_rotation_variable(cls, driver, target, target_axis):
         var = driver.variables.new()
         var.type = 'TRANSFORMS'
 
@@ -96,10 +96,10 @@ class PropertyNamespace:
 
         return var
 
-    @staticmethod
-    def add_rotation_driver(target, axis):
+    @classmethod
+    def add_rotation_driver(cls, target, axis):
         target.rotation_mode = 'XYZ'
-        return add_prop_driver(target, "rotation_euler", axis)
+        return cls.add_prop_driver(target, "rotation_euler", axis)
 
 
     @staticmethod

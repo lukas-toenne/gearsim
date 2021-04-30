@@ -35,6 +35,7 @@ bl_info = {
 if "bpy" in locals():
     import importlib
     importlib.reload(pose_driver_utils)
+    importlib.reload(node_value)
     importlib.reload(gear_nodes)
 
 import bpy
