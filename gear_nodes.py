@@ -74,23 +74,25 @@ class ConstRotationNode(ExpressionNode):
 
 
 class TransmissionNode(ExpressionNode):
+    input_gear : GearDescriptor
     input_teeth : int
     output_teeth : int
-    input_value : NodeValue
     output_value : NodeValue
 
-    def __init__(self, input_teeth, output_teeth):
+    def __init__(self, input_gear, input_teeth, output_teeth):
         super().__init__()
+        self.input_gear = input_gear
         self.input_teeth = input_teeth
         self.output_teeth = output_teeth
 
     def build_drivers(self, context : NodeContext):
+        input_rotation = RotationValue.from_gear(self.input_gear)
         rotation = IDPropValue.from_context(context, "rotation", value=0.0)
         phase = IDPropValue.from_context(context, "phase", value=0.0)
         ratio = self.input_teeth / self.output_teeth
         rotation.make_driver(
             "input * {ratio} + phase".format(ratio=ratio),
-            [NodeVariable("input", self.input_value), NodeVariable("phase", phase)],
+            [NodeVariable("input", input_rotation), NodeVariable("phase", phase)],
             use_self = True
         )
         self.output_value = rotation

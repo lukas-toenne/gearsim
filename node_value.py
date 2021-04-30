@@ -46,6 +46,10 @@ class RotationValue(NodeValue):
     def from_context(cls, context : NodeContext):
         return cls(context.target_gear.pose_bone, context.target_gear.axis)
 
+    @classmethod
+    def from_gear(cls, gear : GearDescriptor):
+        return cls(gear.pose_bone, gear.axis)
+
     def self_prop(self):
         axisname = ['x', 'y', 'z']
         return "self.rotation_euler." + axisname[self.axis]
