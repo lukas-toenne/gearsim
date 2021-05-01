@@ -50,10 +50,10 @@ class ConstRotationNode(ExpressionNode):
         self.default_speed = default_speed
 
     def build_drivers(self, context : NodeContext):
-        self_rotation = RotationValue.from_context(context)
-        rotation = OutputValue.from_context(context, "rotation", "condition", value=0.0)
         # Variable speed setting
         speed = UserParameter.from_context(context, "speed", value=self.default_speed)
+        self_rotation = RotationValue.from_context(context)
+        rotation = OutputValue.from_context(context, "rotation", "condition", value=0.0)
         frame_delta = FrameDeltaValue.from_context(context)
         rotation.make_driver("{curval} + {speed} * {delta} if {cond} else {rot}",
             use_self=True,
@@ -79,18 +79,31 @@ class TransmissionNode(ExpressionNode):
         self.output_teeth = output_teeth
 
     def build_drivers(self, context : NodeContext):
+        # Variable phase setting
+        tooth_phase = UserParameter.from_context(context, "tooth_phase", value=0.0, min=0.0, max=1.0)
         self_rotation = RotationValue.from_context(context)
         input_rotation = RotationValue.from_gear(self.input_gear)
         rotation = OutputValue.from_context(context, "rotation", "condition", value=0.0)
-        phase = IDPropValue.from_context(context, "phase", value=0.0)
+        tooth_offset = IDPropValue.from_context(context, "tooth_offset", value=0)
         ratio = self.input_teeth / self.output_teeth
-        rotation.make_driver("{input} * {ratio} + {phase} if {cond} else {rot}",
+        rotation.make_driver("{input}*{ratio} + 2*pi*({tooth_offset}+{tooth_phase})/{tooth_count} if {cond} else {rot}",
             use_self=True,
             rot=self_rotation.self_prop(),
             curval=rotation.self_prop(),
             input=input_rotation,
             ratio=ratio,
-            phase=phase,
+            tooth_offset=tooth_offset,
+            tooth_count=self.output_teeth,
+            tooth_phase=tooth_phase,
+            cond=rotation.condition,
+        )
+        tooth_offset.make_driver("{curval} if {cond} else round({tooth_count}*({rot}-{input}*{ratio})/(2*pi))",
+            use_self=True,
+            rot=self_rotation.self_prop(),
+            curval=tooth_offset.self_prop(),
+            input=input_rotation,
+            ratio=ratio,
+            tooth_count=self.output_teeth,
             cond=rotation.condition,
         )
         self.output_value = rotation
