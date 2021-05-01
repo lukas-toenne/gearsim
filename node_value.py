@@ -20,12 +20,9 @@ class GearDescriptor:
 class NodeContext:
     scope : str
     target_gear : GearDescriptor
-    current_value : NodeValue
 
     def __init__(self, target_gear : GearDescriptor):
         self.target_gear = target_gear
-        self.current_value = RotationValue(target_gear.pose_bone, target_gear.axis)
-
         self.frame_delta_value = FrameDeltaValue(target_gear.id_data)
 
 
