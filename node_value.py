@@ -23,7 +23,6 @@ class NodeContext:
 
     def __init__(self, target_gear : GearDescriptor):
         self.target_gear = target_gear
-        self.frame_delta_value = FrameDeltaValue(target_gear.id_data)
 
 
 # Describes a value that can be driven or used as a variable in other drivers
