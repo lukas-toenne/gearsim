@@ -131,15 +131,6 @@ class FramePrevValue(IDPropValue):
         return cls(context.id_data, value=value)
 
 
-class UserParameter(IDPropValue):
-    def __init__(self, target, name, *, value=None, min=None, max=None):
-        super().__init__(target, name, value=value, min=min, max=max)
-
-    @classmethod
-    def from_context(cls, context : NodeContext, name, *, value=None, min=None, max=None):
-        return cls(context.id_data, context.scope + name, value=value, min=min, max=max)
-
-
 # Extended node value than can carry a condition
 class OutputValue(IDPropValue):
     condition : NodeValue
