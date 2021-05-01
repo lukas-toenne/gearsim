@@ -7,21 +7,6 @@ from math import *
 from .node_value import *
 
 
-# Named value that can be converted into a driver variable
-class NodeVariable:
-    name : str
-    value : NodeValue
-
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-    def make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
-        var = self.value.make_driver_variable(driver)
-        var.name = self.name
-        return var
-
-
 class Node():
     def __init__(self):
         self.links = []
@@ -41,9 +26,8 @@ class GearNode(Node):
 
     def build_drivers(self, context : NodeContext):
         rotation = RotationValue.from_context(context)
-        rotation.make_driver(
-            "gear_rotation",
-            [NodeVariable("gear_rotation", self.input_value)]
+        rotation.make_driver("gear_rotation",
+            gear_rotation=self.input_value,
         )
 
 
@@ -65,10 +49,12 @@ class ConstRotationNode(ExpressionNode):
         # Variable speed setting
         speed = UserParameter.from_context(context, "speed", value=self.default_speed)
         frame_delta = FrameDeltaValue.from_context(context)
-        rotation.make_driver(
-            "{curval} + speed * delta if cond else {curval}".format(curval=rotation.self_prop()),
-            [NodeVariable("speed", speed), NodeVariable("delta", frame_delta), NodeVariable("cond", rotation.condition)],
-            use_self = True
+        rotation.make_driver("{curval} + {speed} * {delta} if {cond} else {curval}",
+            use_self=True,
+            curval=rotation.self_prop(),
+            speed=speed,
+            delta=frame_delta,
+            cond=rotation.condition,
         )
         self.output_value = rotation
 
@@ -90,10 +76,13 @@ class TransmissionNode(ExpressionNode):
         rotation = OutputValue.from_context(context, "rotation", "condition", value=0.0)
         phase = IDPropValue.from_context(context, "phase", value=0.0)
         ratio = self.input_teeth / self.output_teeth
-        rotation.make_driver(
-            "input * {ratio} + phase if cond else {curval}".format(ratio=ratio, curval=rotation.self_prop()),
-            [NodeVariable("input", input_rotation), NodeVariable("phase", phase), NodeVariable("cond", rotation.condition)],
-            use_self = True
+        rotation.make_driver("{input} * {ratio} + {phase} if {cond} else {curval}",
+            use_self=True,
+            ratio=ratio,
+            curval=rotation.self_prop(),
+            input=input_rotation,
+            phase=phase,
+            cond=rotation.condition,
         )
         self.output_value = rotation
 
@@ -123,13 +112,12 @@ def setup_armature(obj, frame_current):
     frame_delta = FrameDeltaValue(obj, value=0.0)
     frame_prev = FramePrevValue(obj, value=frame_current)
 
-    frame_delta.make_driver(
-        "frame - {frame_prev}".format(frame_prev=frame_prev.self_prop()),
-        [],
-        use_self = True
+    frame_delta.make_driver("frame - {frame_prev}",
+        use_self=True,
+        frame_prev=frame_prev.self_prop(),
     )
     # Dummy variable to enforce a dependency and make sure that prev_frame is updated AFTER the delta
-    frame_prev.make_driver("frame", [NodeVariable("delta", frame_delta)])
+    frame_prev.make_driver("frame", delta=frame_delta)
 
 
 def build_drivers(obj : bpy.types.Object, nodes : Sequence[GearNode], frame_current):

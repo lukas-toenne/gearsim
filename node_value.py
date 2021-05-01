@@ -7,6 +7,23 @@ from .pose_driver_utils import PropertyNamespace
 
 gearsim_namespace = PropertyNamespace("__gearsim__")
 
+def _resolve_driver_variables(driver, expression, **kwargs):
+    driver.use_self = kwargs.get("use_self", False)
+
+    # dict to resolve expression substrings
+    strdict = dict()
+    for key, value in kwargs.items():
+        if isinstance(value, NodeValue):
+            # Create a driver variable, using the key as variable name
+            var = value._make_driver_variable(driver)
+            var.name = key
+            strdict[key] = key
+        else:
+            # Direct expression substring
+            strdict[key] = value
+    # Resolve expression substrings
+    driver.expression = expression.format(**strdict)
+
 
 class GearDescriptor:
     def __init__(self, obj : bpy.types.Object, bone_name, axis):
@@ -39,11 +56,6 @@ class NodeContext:
 class NodeValue:
     condition : NodeValue = None
 
-    def make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
-        pass
-
-    def make_driver(self, expression, variables : Sequence[NodeVariable], use_self=False) -> bpy.types.Driver:
-        pass
 
 class RotationValue(NodeValue):
     def __init__(self, target, axis):
@@ -62,16 +74,14 @@ class RotationValue(NodeValue):
         axisname = ['x', 'y', 'z']
         return "self.rotation_euler." + axisname[self.axis]
 
-    def make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
+    def _make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
         return gearsim_namespace.add_rotation_variable(driver, self.target, self.axis)
 
-    def make_driver(self, expression, variables : Sequence[NodeVariable], use_self=False) -> bpy.types.Driver:
+    def make_driver(self, expression, *, use_self=False, **kwargs) -> bpy.types.Driver:
         driver = gearsim_namespace.add_rotation_driver(self.target, self.axis)
-        driver.expression = expression
-        for var in variables:
-            var.make_driver_variable(driver)
-        driver.use_self = use_self
+        _resolve_driver_variables(driver, expression, use_self=use_self, **kwargs)
         return driver
+
 
 class IDPropValue(NodeValue):
     def __init__(self, target, prop, *, value=None, min=None, max=None):
@@ -94,16 +104,14 @@ class IDPropValue(NodeValue):
     def create(self, value, min, max):
         gearsim_namespace.add_idprop(self.target, self.prop, value, min, max)
 
-    def make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
+    def _make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
         return gearsim_namespace.add_idprop_variable(driver, self.target, self.prop)
 
-    def make_driver(self, expression, variables : Sequence[NodeVariable], use_self=False) -> bpy.types.Driver:
+    def make_driver(self, expression, *, use_self=False, **kwargs) -> bpy.types.Driver:
         driver = gearsim_namespace.add_idprop_driver(self.target, self.prop)
-        driver.expression = expression
-        for var in variables:
-            var.make_driver_variable(driver)
-        driver.use_self = use_self
+        _resolve_driver_variables(driver, expression, use_self=use_self, **kwargs)
         return driver
+
 
 class FrameDeltaValue(IDPropValue):
     def __init__(self, target, *, value=None):
@@ -113,6 +121,7 @@ class FrameDeltaValue(IDPropValue):
     def from_context(cls, context : NodeContext, *, value=None):
         return cls(context.id_data, value=value)
 
+
 class FramePrevValue(IDPropValue):
     def __init__(self, target, *, value=None):
         super().__init__(target, "frame_prev", value=value)
@@ -120,6 +129,7 @@ class FramePrevValue(IDPropValue):
     @classmethod
     def from_context(cls, context : NodeContext, *, value=None):
         return cls(context.id_data, value=value)
+
 
 class UserParameter(IDPropValue):
     def __init__(self, target, name, *, value=None, min=None, max=None):
