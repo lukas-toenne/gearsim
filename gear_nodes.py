@@ -164,7 +164,7 @@ def build_drivers(obj : bpy.types.Object, nodes : Sequence[GearNode], frame_curr
         if isinstance(node, GearNode):
             input_nodes = gather_expression_nodes(node)
 
-            context = NodeContext(node.target_gear)
+            context = NodeContext.from_gear(node.target_gear)
 
             for index, inode in enumerate(input_nodes):
                 # TODO unique but semantically meaningful node names

@@ -19,10 +19,20 @@ class GearDescriptor:
 # Context needed to turn nodes and values into concrete drivers
 class NodeContext:
     scope : str
-    target_gear : GearDescriptor
 
-    def __init__(self, target_gear : GearDescriptor):
-        self.target_gear = target_gear
+    @classmethod
+    def from_gear(cls, target_gear : GearDescriptor) -> NodeContext:
+        context = cls()
+        context.id_data = target_gear.id_data
+        context.pose_bone = target_gear.pose_bone
+        context.axis = target_gear.axis
+        return context
+
+    @classmethod
+    def from_object(cls, obj : bpy.types.Object) -> NodeContext:
+        context = cls()
+        context.id_data = obj
+        return context
 
 
 # Describes a value that can be driven or used as a variable in other drivers
@@ -42,7 +52,7 @@ class RotationValue(NodeValue):
 
     @classmethod
     def from_context(cls, context : NodeContext):
-        return cls(context.target_gear.pose_bone, context.target_gear.axis)
+        return cls(context.pose_bone, context.axis)
 
     @classmethod
     def from_gear(cls, gear : GearDescriptor):
@@ -76,7 +86,7 @@ class IDPropValue(NodeValue):
 
     @classmethod
     def from_context(cls, context : NodeContext, prop, *, value=None, min=None, max=None):
-        return cls(context.target_gear.pose_bone, context.scope + prop, value=value, min=min, max=max)
+        return cls(context.pose_bone, context.scope + prop, value=value, min=min, max=max)
 
     def self_prop(self):
         return "self['" + gearsim_namespace.idprop_uuid(self.target, self.prop) + "']"
@@ -101,7 +111,7 @@ class FrameDeltaValue(IDPropValue):
 
     @classmethod
     def from_context(cls, context : NodeContext, *, value=None):
-        return cls(context.target_gear.id_data, value=value)
+        return cls(context.id_data, value=value)
 
 class FramePrevValue(IDPropValue):
     def __init__(self, target, *, value=None):
@@ -109,7 +119,7 @@ class FramePrevValue(IDPropValue):
 
     @classmethod
     def from_context(cls, context : NodeContext, *, value=None):
-        return cls(context.target_gear.id_data, value=value)
+        return cls(context.id_data, value=value)
 
 class UserParameter(IDPropValue):
     def __init__(self, target, name, *, value=None, min=None, max=None):
@@ -117,7 +127,7 @@ class UserParameter(IDPropValue):
 
     @classmethod
     def from_context(cls, context : NodeContext, name, *, value=None, min=None, max=None):
-        return cls(context.target_gear.id_data, context.scope + name, value=value, min=min, max=max)
+        return cls(context.id_data, context.scope + name, value=value, min=min, max=max)
 
 
 # Extended node value than can carry a condition
@@ -130,4 +140,4 @@ class OutputValue(IDPropValue):
 
     @classmethod
     def from_context(cls, context : NodeContext, name, condname=None, *, value=None, min=None, max=None):
-        return cls(context.target_gear.pose_bone, context.scope + name, context.scope + condname, value=value, min=min, max=max)
+        return cls(context.pose_bone, context.scope + name, context.scope + condname, value=value, min=min, max=max)
