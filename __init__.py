@@ -32,56 +32,22 @@ bl_info = {
     "category": "Object",
 }
 
+import bpy
+from . import pose_driver_utils, node_value, node_tree, nodes, builder
+
 if "bpy" in locals():
     import importlib
     importlib.reload(pose_driver_utils)
     importlib.reload(node_value)
-    importlib.reload(gear_nodes)
-
-import bpy
-from bpy.props import (
-    StringProperty,
-    BoolProperty,
-    IntProperty,
-    FloatProperty,
-    FloatVectorProperty,
-    EnumProperty,
-)
-
-from bpy.types import Operator
-
-# class GearSimSetup(Operator):
-#     bl_idname = "object.setup_gearsim"
-#     bl_label = "Set up gear simulation"
-#     bl_options = {'PRESET', 'UNDO'}
-
-#     def execute(self, context):
-#         return {'FINISHED'}
-
-#     def invoke(self, context, event):
-#         wm = context.window_manager
-#         return wm.invoke_props_dialog(self, width=600)
-
-#     def draw(self, context):
-#         super().draw(context)
-
-# def menu_func(self, context):
-#     layout = self.layout
-#     layout.separator()
-#     layout.operator("object.setup_gearsim", text="Setup Gearsim")
-
+    importlib.reload(node_tree)
+    importlib.reload(nodes)
+    importlib.reload(builder)
 
 def register():
-    # bpy.utils.register_class(GearSimSetup)
-    # bpy.types.VIEW3D_MT_object_quick_effects.append(menu_func)
-    pass
-
+    node_tree.register()
 
 def unregister():
-    # bpy.utils.unregister_class(GearSimSetup)
-    # bpy.types.VIEW3D_MT_object_quick_effects.remove(menu_func)
-    pass
-
+    node_tree.unregister()
 
 if __name__ == "__main__":
     register()
