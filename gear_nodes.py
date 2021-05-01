@@ -18,7 +18,8 @@ class Node():
 # Node that drives the actual gear rotation.
 class GearNode(Node):
     target_gear : GearDescriptor
-    input_value : OutputValue
+    input_value : OutputValue = None
+    condition_value : NodeValue = None
 
     def __init__(self, target_gear):
         super().__init__()
@@ -29,6 +30,10 @@ class GearNode(Node):
         rotation.make_driver("gear_rotation",
             gear_rotation=self.input_value,
         )
+        if (self.condition_value):
+            self.input_value.condition.make_driver("cond",
+                cond=self.condition_value,
+            )
 
 
 # Node used to build conditional expressions for gear drivers.
@@ -38,7 +43,7 @@ class ExpressionNode(Node):
 
 class ConstRotationNode(ExpressionNode):
     default_speed : float
-    output_value : OutputValue
+    output_value : OutputValue = None
 
     def __init__(self, default_speed):
         super().__init__()
@@ -63,7 +68,7 @@ class TransmissionNode(ExpressionNode):
     input_gear : GearDescriptor
     input_teeth : int
     output_teeth : int
-    output_value : OutputValue
+    output_value : OutputValue = None
 
     def __init__(self, input_gear, input_teeth, output_teeth):
         super().__init__()
@@ -85,6 +90,40 @@ class TransmissionNode(ExpressionNode):
             cond=rotation.condition,
         )
         self.output_value = rotation
+
+
+class RangeConditionNode(ExpressionNode):
+    pose_bone : bpy.types.PoseBone
+    axis : int
+    start_angle : float
+    stop_angle : float
+    condition_value : NodeValue = None
+
+    def __init__(self, pose_bone, axis, start_angle, stop_angle):
+        super().__init__()
+        self.pose_bone = pose_bone
+        self.axis = axis
+        self.start_angle = start_angle
+        self.stop_angle = stop_angle
+
+    def build_drivers(self, context : NodeContext):
+        input_rotation = RotationValue(self.pose_bone, self.axis)
+        condition = IDPropValue.from_context(context, "condition", value=0.0)
+        # Normalization factor
+        one_over_two_pi = 1.0 / (2.0 * pi)
+        start=self.start_angle * one_over_two_pi - floor(self.start_angle * one_over_two_pi)
+        stop=self.stop_angle * one_over_two_pi - floor(self.stop_angle * one_over_two_pi)
+        if start <= stop:
+            expr = "1.0 if {input}*{C}-floor({input}*{C}) >= {start} and {input}*{C}-floor({input}*{C}) < {stop} else 0.0"
+        else:
+            expr = "1.0 if {input}*{C}-floor({input}*{C}) >= {start} or {input}*{C}-floor({input}*{C}) < {stop} else 0.0"
+        condition.make_driver(expr,
+            input=input_rotation,
+            C=one_over_two_pi,
+            start=start,
+            stop=stop,
+        )
+        self.condition_value = condition
 
 
 def cleanup_armature(obj):
