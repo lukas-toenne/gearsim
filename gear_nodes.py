@@ -33,7 +33,7 @@ class Node():
 # Node that drives the actual gear rotation.
 class GearNode(Node):
     target_gear : GearDescriptor
-    input_value : NodeValue
+    input_value : OutputValue
 
     def __init__(self, target_gear):
         super().__init__()
@@ -54,20 +54,20 @@ class ExpressionNode(Node):
 
 class ConstRotationNode(ExpressionNode):
     default_speed : float
-    output_value : NodeValue
+    output_value : OutputValue
 
     def __init__(self, default_speed):
         super().__init__()
         self.default_speed = default_speed
 
     def build_drivers(self, context : NodeContext):
-        rotation = IDPropValue.from_context(context, "rotation", value=0.0)
+        rotation = OutputValue.from_context(context, "rotation", "condition", value=0.0)
         # Variable speed setting
         speed = UserParameter.from_context(context, "speed", value=self.default_speed)
         frame_delta = FrameDeltaValue.from_context(context)
         rotation.make_driver(
-            "{curval} + speed * delta".format(curval=rotation.self_prop()),
-            [NodeVariable("speed", speed), NodeVariable("delta", frame_delta)],
+            "{curval} + speed * delta if cond else {curval}".format(curval=rotation.self_prop()),
+            [NodeVariable("speed", speed), NodeVariable("delta", frame_delta), NodeVariable("cond", rotation.condition)],
             use_self = True
         )
         self.output_value = rotation
@@ -77,8 +77,7 @@ class TransmissionNode(ExpressionNode):
     input_gear : GearDescriptor
     input_teeth : int
     output_teeth : int
-    output_value : NodeValue
-    condition : NodeValue
+    output_value : OutputValue
 
     def __init__(self, input_gear, input_teeth, output_teeth):
         super().__init__()
@@ -88,13 +87,12 @@ class TransmissionNode(ExpressionNode):
 
     def build_drivers(self, context : NodeContext):
         input_rotation = RotationValue.from_gear(self.input_gear)
-        condition = IDPropValue.from_context(context, "condition", value=1.0)
-        rotation = IDPropValue.from_context(context, "rotation", value=0.0)
+        rotation = OutputValue.from_context(context, "rotation", "condition", value=0.0)
         phase = IDPropValue.from_context(context, "phase", value=0.0)
         ratio = self.input_teeth / self.output_teeth
         rotation.make_driver(
-            "input * {ratio} + phase if condition else {same}".format(ratio=ratio, same=rotation.self_prop()),
-            [NodeVariable("input", input_rotation), NodeVariable("phase", phase), NodeVariable("condition", condition)],
+            "input * {ratio} + phase if cond else {curval}".format(ratio=ratio, curval=rotation.self_prop()),
+            [NodeVariable("input", input_rotation), NodeVariable("phase", phase), NodeVariable("cond", rotation.condition)],
             use_self = True
         )
         self.output_value = rotation

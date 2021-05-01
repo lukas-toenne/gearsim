@@ -31,6 +31,8 @@ class NodeContext:
 
 # Describes a value that can be driven or used as a variable in other drivers
 class NodeValue:
+    condition : NodeValue = None
+
     def make_driver_variable(self, driver : bpy.types.Driver) -> bpy.types.DriverVariable:
         pass
 
@@ -66,7 +68,7 @@ class RotationValue(NodeValue):
         return driver
 
 class IDPropValue(NodeValue):
-    def __init__(self, target, prop, value=None, min=None, max=None):
+    def __init__(self, target, prop, *, value=None, min=None, max=None):
         self.target = target
         self.prop = prop
         if value is not None:
@@ -77,8 +79,8 @@ class IDPropValue(NodeValue):
             self.create(value, min, max)
 
     @classmethod
-    def from_context(cls, context : NodeContext, prop, value=None, min=None, max=None):
-        return cls(context.target_gear.pose_bone, context.scope + prop, value, min, max)
+    def from_context(cls, context : NodeContext, prop, *, value=None, min=None, max=None):
+        return cls(context.target_gear.pose_bone, context.scope + prop, value=value, min=min, max=max)
 
     def self_prop(self):
         return "self['" + gearsim_namespace.idprop_uuid(self.target, self.prop) + "']"
@@ -98,25 +100,38 @@ class IDPropValue(NodeValue):
         return driver
 
 class FrameDeltaValue(IDPropValue):
-    def __init__(self, target, value=None):
-        super().__init__(target, "frame_delta", value)
+    def __init__(self, target, *, value=None):
+        super().__init__(target, "frame_delta", value=value)
 
     @classmethod
-    def from_context(cls, context : NodeContext, value=None):
-        return cls(context.target_gear.id_data, value)
+    def from_context(cls, context : NodeContext, *, value=None):
+        return cls(context.target_gear.id_data, value=value)
 
 class FramePrevValue(IDPropValue):
-    def __init__(self, target, value=None):
-        super().__init__(target, "frame_prev", value)
+    def __init__(self, target, *, value=None):
+        super().__init__(target, "frame_prev", value=value)
 
     @classmethod
-    def from_context(cls, context : NodeContext, value=None):
-        return cls(context.target_gear.id_data, value)
+    def from_context(cls, context : NodeContext, *, value=None):
+        return cls(context.target_gear.id_data, value=value)
 
 class UserParameter(IDPropValue):
-    def __init__(self, target, name, value=None, min=None, max=None):
-        super().__init__(target, name, value, min, max)
+    def __init__(self, target, name, *, value=None, min=None, max=None):
+        super().__init__(target, name, value=value, min=min, max=max)
 
     @classmethod
-    def from_context(cls, context : NodeContext, name, value=None, min=None, max=None):
-        return cls(context.target_gear.id_data, context.scope + name, value, min, max)
+    def from_context(cls, context : NodeContext, name, *, value=None, min=None, max=None):
+        return cls(context.target_gear.id_data, context.scope + name, value=value, min=min, max=max)
+
+
+# Extended node value than can carry a condition
+class OutputValue(IDPropValue):
+    condition : NodeValue
+
+    def __init__(self, target, prop, condprop=None, *, value=None, min=None, max=None):
+        super().__init__(target, prop, value=value, min=min, max=max)
+        self.condition = IDPropValue(target, condprop, value=1.0, min=0.0, max=1.0) if condprop else None
+
+    @classmethod
+    def from_context(cls, context : NodeContext, name, condname=None, *, value=None, min=None, max=None):
+        return cls(context.target_gear.pose_bone, context.scope + name, context.scope + condname, value=value, min=min, max=max)
