@@ -29,19 +29,38 @@ class GearNodeSetupOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class GearNodeCleanupOperator(bpy.types.Operator):
+    bl_idname = "gearsim.cleanup"
+    bl_label = "Clean up gear simulation"
+    bl_options = {'PRESET', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        if not context.object or context.object.type != 'ARMATURE':
+            return False
+        return True
+
+    def execute(self, context):
+        builder.cleanup_armature(context.object)
+        return {'FINISHED'}
+
+
 def node_header_draw(self, context):
     if context.space_data.tree_type != GearNodeTree.bl_idname:
         return
     layout = self.layout
     layout.operator("gearsim.setup")
+    layout.operator("gearsim.cleanup")
 
 
 def register():
     bpy.utils.register_class(GearNodeTree)
     bpy.utils.register_class(GearNodeSetupOperator)
+    bpy.utils.register_class(GearNodeCleanupOperator)
     bpy.types.NODE_HT_header.append(node_header_draw)
 
 def unregister():
     bpy.utils.unregister_class(GearNodeTree)
     bpy.utils.unregister_class(GearNodeSetupOperator)
+    bpy.utils.unregister_class(GearNodeCleanupOperator)
     bpy.types.NODE_HT_header.remove(node_header_draw)
