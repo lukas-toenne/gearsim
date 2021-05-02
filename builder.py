@@ -3,6 +3,7 @@ from collections.abc import Sequence
 
 import bpy
 from .node_value import *
+from .nodes import GearNode, ExpressionNode
 
 
 def cleanup_armature(obj):
